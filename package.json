@@ -46,6 +46,7 @@
     "webdav": "^5.7.1"
   },
   "devDependencies": {
+    "smallweb": "0.14.0",
     "@raycast/eslint-config": "^1.0.8",
     "@types/node": "20.8.10",
     "@types/react": "18.3.3",

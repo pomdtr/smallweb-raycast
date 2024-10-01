@@ -1,5 +1,5 @@
 import * as fets from 'fets'
-import type openapi from './openapi'
+import type openapi from 'smallweb'
 import { getPreferenceValues } from '@raycast/api'
 import * as webdav from 'webdav'
 
