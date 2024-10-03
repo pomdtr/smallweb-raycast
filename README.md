@@ -19,7 +19,7 @@ If you installed caddy using homebrew, you can find the root certificate at `/op
 
 ## Configuration
 
-1. Make sure that you have created the an app for the api
+1. Make sure that the api is published on your smallweb instance
 
     ```jsonc
     // ~/smallweb/api/smallweb.json
@@ -41,4 +41,4 @@ If you installed caddy using homebrew, you can find the root certificate at `/op
 
 3. Pass both the url and the token to the extension at start
 
-4. (Optional) If smallweb is synced to a folder on your desktop, you can configure it in the extension parameters
+4. (Optional) If smallweb is synced to a folder on your desktop, you can configure it in the extension settings
