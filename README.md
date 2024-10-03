@@ -7,7 +7,7 @@
 1. `npm install`
 2. `npm run dev` (while raycast is running)
 
-## Insalling self-signed certificates
+## Installing self-signed certificates
 
 If you're using `*.localhost` domains, you'll need to tell raycast to use caddy self-signed certificates.
 
