@@ -7,6 +7,16 @@
 1. `npm install`
 2. `npm run dev` (while raycast is running)
 
+## Insalling self-signed certificates
+
+If you're using `*.localhost` domains, you'll need to tell raycast to use caddy self-signed certificates.
+
+You can configure them in the raycast Advanced settings.
+
+![alt text](media/image.png)
+
+If you installed caddy using homebrew, you can find the root certificate at `/opt/homebrew/var/lib/caddy/pki/authorities/local/root.crt`.
+
 ## Configuration
 
 1. Make sure that you have created the an app for the api
