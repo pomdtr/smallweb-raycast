@@ -17,8 +17,5 @@ const webdavClient = webdav.createClient(new URL("/webdav", endpoint).toString()
     username: token,
 })
 
-webdavClient.getDirectoryContents("/", {
-})
-
 
 export { apiClient as api, webdavClient as webdav }
