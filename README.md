@@ -11,7 +11,7 @@
 
 1. Make sure that you have created the an app for the api
 
-    ```json
+    ```jsonc
     // ~/smallweb/api/smallweb.json
     {
         "entrypoint": "smallweb:api",
