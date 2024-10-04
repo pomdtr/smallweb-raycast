@@ -27,8 +27,8 @@ export default function SearchApps() {
         })} key={app.name} keywords={[app.name]} title={app.manifest?.short_name || app.name} subtitle={app.manifest?.description} accessories={[{ text: app.name }]} actions={
             <ActionPanel>
                 <ActionPanel.Section>
-                    <Action.Push icon={Icon.Folder} title="Browse Files" target={<BrowseDir path={`/${app.name}`} />} />
                     <Action.OpenInBrowser title="Open in Browser" url={app.url} onOpen={() => visitItem(app)} />
+                    <Action.Push icon={Icon.Folder} title="Browse Files" target={<BrowseDir path={`/${app.name}`} />} />
                     <Action.CopyToClipboard shortcut={Keyboard.Shortcut.Common.Copy} title="Copy Link" content={app.url} onCopy={() => visitItem(app)} />
                 </ActionPanel.Section>
                 {dir ?
