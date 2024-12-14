@@ -1,5 +1,5 @@
 import { Action, ActionPanel, Detail, getPreferenceValues, Icon, Image, Keyboard, List } from "@raycast/api";
-import { getFavicon, usePromise } from "@raycast/utils";
+import { getFavicon, usePromise, useFrecencySorting } from "@raycast/utils";
 import fs from "fs/promises";
 import path from "path";
 
@@ -34,11 +34,14 @@ async function listApps(dir: string) {
 }
 
 export default function SearchApps() {
-  const { data: apps, isLoading, error } = usePromise(listApps, [prefs.dir]);
-
+  const { data, isLoading, error } = usePromise(listApps, [prefs.dir]);
   if (error) {
     return <Detail markdown={error.message} />;
   }
+
+  const { data: apps, visitItem } = useFrecencySorting(data, {
+    key: (app) => app.name,
+  });
 
   return (
     <List isLoading={isLoading}>
@@ -55,9 +58,13 @@ export default function SearchApps() {
           actions={
             <ActionPanel>
               <ActionPanel.Section>
-                <Action.OpenInBrowser title="Open in Browser" url={app.url} />
-                {/* <Action.Push icon={Icon.Folder} title="Browse Files" target={<BrowseDir path={`/${app.name}`} />} /> */}
-                <Action.CopyToClipboard shortcut={Keyboard.Shortcut.Common.Copy} title="Copy Link" content={app.url} />
+                <Action.OpenInBrowser title="Open in Browser" url={app.url} onOpen={() => visitItem(app)} />
+                <Action.CopyToClipboard
+                  shortcut={Keyboard.Shortcut.Common.Copy}
+                  title="Copy Link"
+                  content={app.url}
+                  onCopy={() => visitItem(app)}
+                />
               </ActionPanel.Section>
               <ActionPanel.Section>
                 <Action.Open
@@ -65,12 +72,18 @@ export default function SearchApps() {
                   application="Finder"
                   title="Open in Finder"
                   target={app.dir}
+                  onOpen={() => visitItem(app)}
                 />
-                <Action.OpenWith shortcut={Keyboard.Shortcut.Common.OpenWith} path={app.dir} />
+                <Action.OpenWith
+                  shortcut={Keyboard.Shortcut.Common.OpenWith}
+                  path={app.dir}
+                  onOpen={() => visitItem(app)}
+                />
                 <Action.CopyToClipboard
                   shortcut={Keyboard.Shortcut.Common.CopyPath}
                   title="Copy Path"
                   content={app.dir}
+                  onCopy={() => visitItem(app)}
                 />
               </ActionPanel.Section>
             </ActionPanel>
