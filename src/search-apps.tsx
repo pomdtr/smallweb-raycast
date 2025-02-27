@@ -44,7 +44,9 @@ export default function SearchApps() {
             <ActionPanel>
               <ActionPanel.Section>
                 <Action.OpenInBrowser title="Open in Browser" url={app.url} onOpen={() => visitItem(app)} />
-                {prefs.editor ? <Action.Open title="Open in Editor" icon={Icon.Pencil} target={app.dir} application={prefs.editor} /> : null}
+                {prefs.editor ? (
+                  <Action.Open title="Open in Editor" icon={Icon.Pencil} target={app.dir} application={prefs.editor} />
+                ) : null}
                 <Action.CopyToClipboard
                   shortcut={Keyboard.Shortcut.Common.Copy}
                   title="Copy Link"
