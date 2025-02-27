@@ -13,6 +13,12 @@
   ],
   "commands": [
     {
+      "name": "open-config",
+      "title": "Open Config",
+      "description": "Edit the config file for Smallweb",
+      "mode": "no-view"
+    },
+    {
       "name": "search-apps",
       "title": "Search Apps",
       "description": "Search apps in Smallweb",

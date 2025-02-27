@@ -4,7 +4,7 @@ import fs from "fs/promises";
 import path from "path";
 import { loadConfig } from "./config";
 
-const prefs = getPreferenceValues<Preferences.SearchApps>();
+const preferences = getPreferenceValues<Preferences.SearchApps>();
 
 async function listApps(dir: string) {
   const entries = await fs.readdir(dir);
@@ -19,7 +19,7 @@ async function listApps(dir: string) {
 }
 
 export default function SearchApps() {
-  const { data, isLoading, error } = usePromise(listApps, [prefs.dir]);
+  const { data, isLoading, error } = usePromise(listApps, [preferences.dir]);
   if (error) {
     return <Detail markdown={error.message} />;
   }
@@ -44,8 +44,8 @@ export default function SearchApps() {
             <ActionPanel>
               <ActionPanel.Section>
                 <Action.OpenInBrowser title="Open in Browser" url={app.url} onOpen={() => visitItem(app)} />
-                {prefs.editor ? (
-                  <Action.Open title="Open in Editor" icon={Icon.Pencil} target={app.dir} application={prefs.editor} />
+                {preferences.editor ? (
+                  <Action.Open title="Open in Editor" icon={Icon.Pencil} target={app.dir} application={preferences.editor} />
                 ) : null}
                 <Action.CopyToClipboard
                   shortcut={Keyboard.Shortcut.Common.Copy}
