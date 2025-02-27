@@ -2,24 +2,9 @@ import { Action, ActionPanel, Detail, getPreferenceValues, Icon, Image, Keyboard
 import { getFavicon, usePromise, useFrecencySorting } from "@raycast/utils";
 import fs from "fs/promises";
 import path from "path";
+import { loadConfig } from "./config";
 
 const prefs = getPreferenceValues<Preferences.SearchApps>();
-
-type Config = {
-  domain: string;
-};
-
-async function loadConfig(dir: string): Promise<Config> {
-  const configPath = path.join(dir, ".smallweb", "config.json");
-  const stat = await fs.stat(configPath).catch(() => null);
-  if (!stat) {
-    throw new Error("Config file not found");
-  }
-
-  const content = await fs.readFile(configPath, "utf8");
-  const config = JSON.parse(content) as Config;
-  return config;
-}
 
 async function listApps(dir: string) {
   const entries = await fs.readdir(dir);
@@ -54,11 +39,12 @@ export default function SearchApps() {
           key={app.name}
           keywords={[app.name]}
           title={app.name}
-          accessories={[{ text: app.url }]}
+          accessories={[{ text: new URL(app.url).hostname }]}
           actions={
             <ActionPanel>
               <ActionPanel.Section>
                 <Action.OpenInBrowser title="Open in Browser" url={app.url} onOpen={() => visitItem(app)} />
+                {prefs.editor ? <Action.Open title="Open in Editor" icon={Icon.Pencil} target={app.dir} application={prefs.editor} /> : null}
                 <Action.CopyToClipboard
                   shortcut={Keyboard.Shortcut.Common.Copy}
                   title="Copy Link"

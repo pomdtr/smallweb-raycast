@@ -17,6 +17,12 @@
       "title": "Search Apps",
       "description": "Search apps in Smallweb",
       "mode": "view"
+    },
+    {
+      "name": "open-app",
+      "title": "Open Current Tab in Editor",
+      "description": "Open an app in your editor",
+      "mode": "no-view"
     }
   ],
   "preferences": [
@@ -26,6 +32,14 @@
       "type": "directory",
       "required": true,
       "description": "Your Smallweb directory"
+    },
+    {
+      "type": "appPicker",
+      "title": "Editor",
+      "name": "editor",
+      "description": "The app to open the website with",
+      "placeholder": "Visual Studio Code",
+      "required": true
     }
   ],
   "dependencies": {
