@@ -47,15 +47,20 @@ export default function SearchApps() {
   const { data, mutate } = useSmallweb(dirs);
 
   const domains = data?.map((app) => app.rootDomain).filter((value, index, self) => self.indexOf(value) === index);
-  const pinnedApps = pinnedEntries.map((entry) => data?.find((app) => app.domain == entry.domain)).filter((app) => app) as App[];
+  const pinnedApps = selectedDomain == "<all>" ? pinnedEntries.map((entry) => data?.find((app) => app.domain == entry.domain)).filter((app) => app) as App[] : []
 
   const { data: apps, visitItem } = useFrecencySorting(data?.filter(app => {
+    if (pinnedApps.find((pinnedApp) => pinnedApp.domain == app.domain)) {
+      return false;
+    }
+
     if (!selectedDomain || selectedDomain == "<all>") {
       return true;
     }
 
+
     return app.rootDomain == selectedDomain;
-  }), {
+  }).sort((a, b) => a.name.localeCompare(b.name)), {
     key: (app) => app.url,
   });
 
@@ -74,11 +79,9 @@ export default function SearchApps() {
       <List.EmptyView title="No Apps Found" actions={<ActionPanel>
         {configureAction}
       </ActionPanel>} />
-      {selectedDomain == "<all>" &&
-        <List.Section title="Pinned Apps">
-          {pinnedApps?.map((app) => <AppItem app={app} key={`${app.domain}:pinned`} pinned {...pinnedMethods} additionalActions={[configureAction]} />)}
-        </List.Section>
-      }
+      <List.Section title="Pinned Apps">
+        {pinnedApps?.map((app) => <AppItem app={app} key={`${app.domain}:pinned`} pinned {...pinnedMethods} additionalActions={[configureAction]} />)}
+      </List.Section>
       <List.Section title="Apps">
         {apps?.map((app) => <AppItem app={app} key={app.domain} visitItem={visitItem} {...pinnedMethods} additionalActions={[configureAction]} />)}
       </List.Section>
