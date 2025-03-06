@@ -13,7 +13,7 @@ const preferences = getPreferenceValues<Preferences.SearchApps>();
 function useSmallweb(dirs?: string[]) {
   const listApps = async (dirs?: string[]) => {
     if (!dirs) {
-      return [];
+      return undefined;
     }
 
     const apps = await Promise.all(dirs.map(async (dir) => {
@@ -60,7 +60,7 @@ export default function SearchApps() {
 
   const pinnedApps = apps?.filter((app) => pinnedEntries.some((entry) => entry.domain == app.domain));
   return (
-    <List isLoading={false} searchBarAccessory={<List.Dropdown tooltip="Domain" defaultValue={"<all>"} onChange={(domain) => setSelectedDomain(domain)}>
+    <List isLoading={typeof data == "undefined"} searchBarAccessory={<List.Dropdown tooltip="Domain" defaultValue={"<all>"} onChange={(domain) => setSelectedDomain(domain)}>
       <List.Dropdown.Section>
         <List.Dropdown.Item icon={Icon.Globe} key="all" title="All Domains" value="<all>" />
       </List.Dropdown.Section>
