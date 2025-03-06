@@ -1,13 +1,14 @@
-import { Action, ActionPanel, Detail, Form, getPreferenceValues, Icon, Image, Keyboard, List, useNavigation } from "@raycast/api";
+import { Action, ActionPanel, Detail, Form, getPreferenceValues, Icon, Image, Keyboard, List, showToast, useNavigation } from "@raycast/api";
 import { getFavicon, usePromise, useFrecencySorting } from "@raycast/utils";
 import fs from "fs/promises";
 import path from "path";
 import { loadConfig } from "./config";
 import { useDirs } from "./hooks";
 import { useState } from "react";
+import { PinnedEntry, usePinnedEntries, type PinMethods } from "./pinned";
+import type { App } from "./app";
 
 const preferences = getPreferenceValues<Preferences.SearchApps>();
-
 
 function useSmallweb(dirs?: string[]) {
   const listApps = async (dirs?: string[]) => {
@@ -20,13 +21,16 @@ function useSmallweb(dirs?: string[]) {
       const names = entries.filter((entry) => !entry.startsWith("."));
 
       const config = await loadConfig(dir);
-      return names.map((name) => ({
+      const apps: App[] = names.map((name) => ({
         name,
+        domain: `${name}.${config.domain}`,
         rootDomain: config.domain,
         url: `https://${name}.${config.domain}`,
+        rootDir: dir,
         dir: path.join(dir, name),
       }))
 
+      return apps;
     }))
 
     return apps.flat()
@@ -39,11 +43,8 @@ export default function SearchApps() {
   const { dirs, setDirs } = useDirs()
   const navigation = useNavigation();
   const [selectedDomain, setSelectedDomain] = useState<string>();
-  const { data, error, mutate } = useSmallweb(dirs);
-  if (error) {
-    return <Detail markdown={error.message} />;
-  }
-
+  const { pinnedEntries, ...pinnedMethods } = usePinnedEntries();
+  const { data, mutate } = useSmallweb(dirs);
   const domains = data?.map((app) => app.rootDomain).filter((value, index, self) => self.indexOf(value) === index);
   const { data: apps, visitItem } = useFrecencySorting(data?.filter(app => {
     if (!selectedDomain || selectedDomain == "<all>") {
@@ -52,12 +53,14 @@ export default function SearchApps() {
 
     return app.rootDomain == selectedDomain;
   }), {
-    key: (app) => app.name,
+    key: (app) => app.url,
   });
 
+  const configureAction = <Action.Push icon={Icon.Cog} title="Configure Dirs" target={<ConfigureDirs defaultValue={dirs} onSubmit={async (dirs) => { await setDirs(dirs); navigation.pop() }} />} onPop={() => mutate()} />
 
+  const pinnedApps = apps?.filter((app) => pinnedEntries.some((entry) => entry.domain == app.domain));
   return (
-    <List isLoading={apps.length == 0} searchBarAccessory={<List.Dropdown tooltip="Domain" defaultValue={"<all>"} onChange={(domain) => setSelectedDomain(domain)}>
+    <List isLoading={false} searchBarAccessory={<List.Dropdown tooltip="Domain" defaultValue={"<all>"} onChange={(domain) => setSelectedDomain(domain)}>
       <List.Dropdown.Section>
         <List.Dropdown.Item icon={Icon.Globe} key="all" title="All Domains" value="<all>" />
       </List.Dropdown.Section>
@@ -66,61 +69,125 @@ export default function SearchApps() {
       </List.Dropdown.Section>
     </List.Dropdown>}>
       <List.EmptyView title="No Apps Found" actions={<ActionPanel>
-        <Action.Push icon={Icon.Cog} title="Configure Dirs" target={<ConfigureDirs defaultValue={dirs} onSubmit={async (dirs) => { await setDirs(dirs); navigation.pop() }} />} onPop={() => mutate()} />
+        {configureAction}
       </ActionPanel>} />
-      {apps?.map((app) => (
-        <List.Item
-          icon={getFavicon(app.url, {
-            mask: Image.Mask.RoundedRectangle,
-            fallback: Icon.Globe,
-          })}
-          key={app.url}
-          keywords={[app.name, app.rootDomain]}
-          title={app.name}
-          subtitle={app.rootDomain}
-          accessories={[{ text: app.url }]}
-          actions={
-            <ActionPanel>
-              <ActionPanel.Section>
-                <Action.OpenInBrowser title="Open in Browser" url={app.url} onOpen={() => visitItem(app)} />
-                {preferences.editor ? (
-                  <Action.Open title="Open in Editor" icon={Icon.Pencil} target={app.dir} application={preferences.editor} onOpen={() => visitItem(app)} />
-                ) : null}
-                <Action.Open
-                  shortcut={Keyboard.Shortcut.Common.Open}
-                  application="Finder"
-                  title="Open in Finder"
-                  target={app.dir}
-                  onOpen={() => visitItem(app)}
-                />
-                <Action.OpenWith
-                  shortcut={Keyboard.Shortcut.Common.OpenWith}
-                  path={app.dir}
-                  onOpen={() => visitItem(app)}
-                />
-              </ActionPanel.Section>
-              <ActionPanel.Section>
-                <Action.CopyToClipboard
-                  shortcut={Keyboard.Shortcut.Common.Copy}
-                  title="Copy Link"
-                  content={app.url}
-                  onCopy={() => visitItem(app)}
-                />
-                <Action.CopyToClipboard
-                  shortcut={Keyboard.Shortcut.Common.CopyPath}
-                  title="Copy Path"
-                  content={app.dir}
-                  onCopy={() => visitItem(app)}
-                />
-              </ActionPanel.Section>
-              <ActionPanel.Section>
-                <Action.Push icon={Icon.Cog} title="Configure Dirs" target={<ConfigureDirs defaultValue={dirs} onSubmit={async (dirs) => { await setDirs(dirs); navigation.pop() }} />} onPop={() => mutate()} />
-              </ActionPanel.Section>
-            </ActionPanel>
-          }
-        />
-      ))}
+      <List.Section title="Pinned Apps">
+        {pinnedApps?.map((app) => <AppItem app={app} key={`${app.domain}:pinned`} pinned {...pinnedMethods} additionalActions={[configureAction]} />)}
+      </List.Section>
+      <List.Section title="Apps">
+        {apps?.map((app) => <AppItem app={app} key={app.domain} visitItem={visitItem} {...pinnedMethods} additionalActions={[configureAction]} />)}
+      </List.Section>
     </List>
+  );
+}
+
+function AppItem({ app, visitItem = () => { }, pinned = false, additionalActions, ...pinnedMethods }: { app: App, pinned?: boolean, visitItem?: (app: App) => void, additionalActions?: React.ReactNode } & PinMethods) {
+  return <List.Item
+    icon={getFavicon(app.url, {
+      mask: Image.Mask.RoundedRectangle,
+      fallback: Icon.Globe,
+    })}
+    keywords={[app.name, app.rootDomain]}
+    title={app.name}
+    subtitle={app.rootDomain}
+    actions={
+      <ActionPanel>
+        <ActionPanel.Section>
+          <Action.OpenInBrowser title="Open in Browser" url={app.url} onOpen={() => visitItem(app)} />
+          {preferences.editor ? (
+            <Action.Open title="Open in Editor" icon={Icon.Pencil} target={app.dir} application={preferences.editor} onOpen={() => visitItem(app)} />
+          ) : null}
+          <Action.Open
+            shortcut={Keyboard.Shortcut.Common.Open}
+            application="Finder"
+            title="Open in Finder"
+            target={app.dir}
+            onOpen={() => visitItem(app)}
+          />
+          <Action.OpenWith
+            shortcut={Keyboard.Shortcut.Common.OpenWith}
+            path={app.dir}
+            onOpen={() => visitItem(app)}
+          />
+        </ActionPanel.Section>
+        <ActionPanel.Section>
+          <Action.CopyToClipboard
+            shortcut={Keyboard.Shortcut.Common.Copy}
+            title="Copy Link"
+            content={app.url}
+            onCopy={() => visitItem(app)}
+          />
+          <Action.CopyToClipboard
+            shortcut={Keyboard.Shortcut.Common.CopyPath}
+            title="Copy Path"
+            content={app.dir}
+            onCopy={() => visitItem(app)}
+          />
+        </ActionPanel.Section>
+        <PinActionSection entry={{
+          domain: app.domain,
+        }} {...pinnedMethods} pinned={pinned} />
+        <ActionPanel.Section>
+          {additionalActions}
+        </ActionPanel.Section>
+      </ActionPanel>
+    }
+  />
+}
+
+function PinActionSection(props: { entry: PinnedEntry; pinned?: boolean } & PinMethods) {
+  return !props.pinned ? (
+    <ActionPanel.Section>
+      <Action
+        title="Pin Entry"
+        icon={Icon.Pin}
+        shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+        onAction={async () => {
+          props.pin(props.entry);
+          await showToast({ title: "Pinned entry" });
+        }}
+      />
+    </ActionPanel.Section>
+  ) : (
+    <ActionPanel.Section>
+      <Action
+        title="Unpin Entry"
+        shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+        icon={Icon.PinDisabled}
+        onAction={async () => {
+          props.unpin(props.entry);
+          await showToast({ title: "Unpinned entry" });
+        }}
+      />
+      <Action
+        title="Move up in Pinned Entries"
+        shortcut={{ modifiers: ["cmd", "opt"], key: "arrowUp" }}
+        icon={Icon.ArrowUp}
+        onAction={async () => {
+          props.moveUp(props.entry);
+          await showToast({ title: "Moved pinned entry up" });
+        }}
+      />
+      <Action
+        title="Move Down in Pinned Entries"
+        shortcut={{ modifiers: ["cmd", "opt"], key: "arrowDown" }}
+        icon={Icon.ArrowDown}
+        onAction={async () => {
+          props.moveDown(props.entry);
+          await showToast({ title: "Moved pinned entry down" });
+        }}
+      />
+      <Action
+        title="Unpin All Entries"
+        icon={Icon.PinDisabled}
+        shortcut={{ modifiers: ["ctrl", "shift"], key: "x" }}
+        style={Action.Style.Destructive}
+        onAction={async () => {
+          props.unpinAll();
+          await showToast({ title: "Unpinned all entries" });
+        }}
+      />
+    </ActionPanel.Section>
   );
 }
 
