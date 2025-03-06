@@ -17,8 +17,18 @@ function useSmallweb(dirs?: string[]) {
     }
 
     const apps = await Promise.all(dirs.map(async (dir) => {
-      const entries = await fs.readdir(dir);
-      const names = entries.filter((entry) => !entry.startsWith("."));
+      const names = []
+      for await (const entry of await fs.opendir(dir)) {
+        if (entry.name.startsWith(".")) {
+          continue;
+        }
+
+        if (!entry.isDirectory()) {
+          continue
+        }
+
+        names.push(entry.name);
+      }
 
       const config = await loadConfig(dir);
       const apps: App[] = names.map((name) => ({
@@ -76,7 +86,7 @@ export default function SearchApps() {
         {domains?.map(domain => <List.Dropdown.Item icon={Icon.Globe} key={domain} title={domain} value={domain} />)}
       </List.Dropdown.Section>
     </List.Dropdown>}>
-      <List.EmptyView title="No Apps Found" actions={<ActionPanel>
+      <List.EmptyView title="No apps found, hit enter to configure directories." actions={<ActionPanel>
         {configureAction}
       </ActionPanel>} />
       <List.Section title="Pinned Apps">
