@@ -1,23 +1,33 @@
-import { getPreferenceValues, BrowserExtension, open, showToast, Toast } from "@raycast/api";
+import { getPreferenceValues, BrowserExtension, open, showToast, Toast, LocalStorage } from "@raycast/api";
 import { loadConfig, type Config } from "./config";
 import path from "path";
+import { App } from "./app";
 
-function lookupApp(config: Config, hostname: string): string | null {
+function lookupApp(config: Config, hostname: string): App | null {
   for (const [app, appConfig] of Object.entries(config.apps ?? {})) {
     if (appConfig.additionalDomains?.includes(hostname)) {
-      return app;
+      return {
+        dir: path.join(config.dir, app),
+        name: app,
+      }
     }
   }
 
   const [app, ...parts] = hostname.split(".");
   const domain = parts.join(".");
   if (config.domain == domain) {
-    return app;
+    return {
+      dir: path.join(config.dir, app),
+      name: app,
+    }
   }
 
   for (const additionalDomain of config.additionalDomains ?? []) {
     if (additionalDomain == domain) {
-      return app;
+      return {
+        dir: path.join(config.dir, app),
+        name: app,
+      }
     }
   }
 
@@ -26,7 +36,13 @@ function lookupApp(config: Config, hostname: string): string | null {
 
 const preferences = getPreferenceValues<Preferences.OpenApp>();
 export default async function () {
-  const config = await loadConfig(preferences.dir);
+  const dirs = JSON.parse(await LocalStorage.getItem<string>("dirs") || "[]") as string[];
+  if (!dirs) {
+    await showToast({ title: "No dirs found", style: Toast.Style.Failure });
+    return;
+  }
+
+  const configs = await Promise.all(dirs.map(async (dir) => loadConfig(dir)));
 
   const tabs = await BrowserExtension.getTabs();
   const selectedTab = tabs.find((tab) => tab.active == true);
@@ -37,12 +53,15 @@ export default async function () {
 
   const url = new URL(selectedTab.url);
 
-  const app = lookupApp(config, url.hostname);
-  if (!app) {
-    await showToast({ title: `Active tab is not a smallweb app`, style: Toast.Style.Failure });
-    return;
+  for (const config of configs) {
+    const app = lookupApp(config, url.hostname);
+    if (app) {
+      await open(app.dir, preferences.editor);
+      return;
+    }
   }
 
-  const dir = path.join(preferences.dir, app);
-  await open(dir, preferences.editor);
+  await showToast({ title: `Active tab is not a smallweb app`, style: Toast.Style.Failure });
+  return;
+
 }

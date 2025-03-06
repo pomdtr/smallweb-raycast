@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs/promises";
 
 export type Config = {
+  dir: string;
   domain: string;
   authorizedKeys?: string[];
   additionalDomains?: string[];
@@ -25,5 +26,6 @@ export async function loadConfig(dir: string): Promise<Config> {
 
   const content = await fs.readFile(configPath, "utf8");
   const config = JSON.parse(content) as Config;
+  config.dir = dir;
   return config;
 }
