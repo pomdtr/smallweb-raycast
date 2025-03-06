@@ -74,9 +74,11 @@ export default function SearchApps() {
       <List.EmptyView title="No Apps Found" actions={<ActionPanel>
         {configureAction}
       </ActionPanel>} />
-      <List.Section title="Pinned Apps">
-        {pinnedApps?.map((app) => <AppItem app={app} key={`${app.domain}:pinned`} pinned {...pinnedMethods} additionalActions={[configureAction]} />)}
-      </List.Section>
+      {selectedDomain == "<all>" &&
+        <List.Section title="Pinned Apps">
+          {pinnedApps?.map((app) => <AppItem app={app} key={`${app.domain}:pinned`} pinned {...pinnedMethods} additionalActions={[configureAction]} />)}
+        </List.Section>
+      }
       <List.Section title="Apps">
         {apps?.map((app) => <AppItem app={app} key={app.domain} visitItem={visitItem} {...pinnedMethods} additionalActions={[configureAction]} />)}
       </List.Section>
