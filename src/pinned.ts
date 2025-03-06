@@ -25,12 +25,18 @@ export function usePinnedEntries(): { pinnedEntries: PinnedEntry[] } & PinMethod
         moveUp: (entry: PinnedEntry) =>
             setEntries((previousEntries) => {
                 const i = previousEntries.findIndex((e) => isDeepStrictEqual(e, entry));
+                if (i === 0) {
+                    return previousEntries;
+                }
                 previousEntries.splice(i - 1, 2, previousEntries[i], previousEntries[i - 1]);
                 return previousEntries;
             }),
         moveDown: (entry: PinnedEntry) =>
             setEntries((previousEntries) => {
                 const i = previousEntries.findIndex((e) => isDeepStrictEqual(e, entry));
+                if (i === previousEntries.length - 1) {
+                    return previousEntries;
+                }
                 previousEntries.splice(i, 2, previousEntries[i + 1], previousEntries[i]);
                 return previousEntries;
             }),
