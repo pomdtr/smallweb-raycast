@@ -45,7 +45,10 @@ export default function SearchApps() {
   const [selectedDomain, setSelectedDomain] = useState<string>();
   const { pinnedEntries, ...pinnedMethods } = usePinnedEntries();
   const { data, mutate } = useSmallweb(dirs);
+
   const domains = data?.map((app) => app.rootDomain).filter((value, index, self) => self.indexOf(value) === index);
+  const pinnedApps = pinnedEntries.map((entry) => data?.find((app) => app.domain == entry.domain)).filter((app) => app) as App[];
+
   const { data: apps, visitItem } = useFrecencySorting(data?.filter(app => {
     if (!selectedDomain || selectedDomain == "<all>") {
       return true;
@@ -56,9 +59,9 @@ export default function SearchApps() {
     key: (app) => app.url,
   });
 
-  const configureAction = <Action.Push icon={Icon.Cog} title="Configure Dirs" target={<ConfigureDirs defaultValue={dirs} onSubmit={async (dirs) => { await setDirs(dirs); navigation.pop() }} />} onPop={() => mutate()} />
+  const configureAction = <Action.Push icon={Icon.Cog} title="Configure Directories" target={<ConfigureDirs defaultValue={dirs} onSubmit={async (dirs) => { await setDirs(dirs); navigation.pop() }} />} onPop={() => mutate()} />
 
-  const pinnedApps = apps?.filter((app) => pinnedEntries.some((entry) => entry.domain == app.domain));
+
   return (
     <List isLoading={typeof data == "undefined"} searchBarAccessory={<List.Dropdown tooltip="Domain" defaultValue={"<all>"} onChange={(domain) => setSelectedDomain(domain)}>
       <List.Dropdown.Section>
