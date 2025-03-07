@@ -116,7 +116,7 @@ function AppItem({ app, visitItem = () => { }, pinned = false, additionalActions
             <Action.Open title="Open in Editor" icon={Icon.Pencil} target={app.dir} application={preferences.editor} onOpen={() => visitItem(app)} />
           ) : null}
           <Action.Open
-            shortcut={Keyboard.Shortcut.Common.Open}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
             application="Finder"
             title="Open in Finder"
             target={app.dir}
