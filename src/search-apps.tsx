@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Detail, Form, getPreferenceValues, Icon, Image, Keyboard, List, showToast, useNavigation } from "@raycast/api";
+import { Action, ActionPanel, Form, getPreferenceValues, Icon, Image, Keyboard, List, showToast, useNavigation } from "@raycast/api";
 import { getFavicon, usePromise, useFrecencySorting } from "@raycast/utils";
 import fs from "fs/promises";
 import path from "path";
@@ -74,8 +74,7 @@ export default function SearchApps() {
     key: (app) => app.url,
   });
 
-  const configureAction = <Action.Push icon={Icon.Cog} title="Configure Directories" target={<ConfigureDirs defaultValue={dirs} onSubmit={async (dirs) => { await setDirs(dirs); navigation.pop() }} />} onPop={() => mutate()} />
-
+  const configureAction = <Action.Push icon={Icon.Cog} title="Configure Directories" shortcut={{ modifiers: ["cmd", "opt"], key: "," }} target={<ConfigureDirs defaultValue={dirs} onSubmit={async (dirs) => { await setDirs(dirs); navigation.pop() }} />} onPop={() => mutate()} />
 
   return (
     <List isLoading={typeof data == "undefined"} searchBarAccessory={<List.Dropdown tooltip="Domain" defaultValue={"<all>"} onChange={(domain) => setSelectedDomain(domain)}>
